@@ -50,6 +50,7 @@ class CarInterface(object):
 
     # kg of standard extra cargo to count for drive, gas, etc...
     std_cargo = 200 # Comma use 136kg  ..  Fuel = 60kg, Driver = 80kg (assuming 70kg and not naked), Cargo = 20kg .. This is the minimum.. assume 50% of the time there is a passenger also 70kg and not naked, so 40kg.
+    weight_dist_rear = 0.45
 
     ret = car.CarParams.new_message()
 
@@ -63,7 +64,7 @@ class CarInterface(object):
     # scale unknown params for other cars
     mass_civic = 2923 * CV.LB_TO_KG + std_cargo
     wheelbase_civic = 2.70
-    centerToFront_civic = wheelbase_civic * 0.45
+    centerToFront_civic = wheelbase_civic * weight_dist_rear
     centerToRear_civic = wheelbase_civic - centerToFront_civic
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
@@ -125,7 +126,7 @@ class CarInterface(object):
     ret.longitudinalKiBP = [0.]
     ret.longitudinalKiV = [0.]
 
-    ret.centerToFront = ret.wheelbase * 0.45
+    ret.centerToFront = ret.wheelbase * weight_dist_rear
 
     centerToRear = ret.wheelbase - ret.centerToFront
 
@@ -258,7 +259,7 @@ class CarInterface(object):
         events.append(create_event('commIssue', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
     else:
       self.can_invalid_count = 0
-    if not ret.gearShifter == 'drive':
+    if ret.gearShifter != 'drive':
       events.append(create_event('wrongGear', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
     if ret.doorOpen:
       events.append(create_event('doorOpen', [ET.NO_ENTRY, ET.SOFT_DISABLE]))

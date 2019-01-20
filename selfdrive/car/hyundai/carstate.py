@@ -315,9 +315,9 @@ class CarState(object):
     gear2 = cp.vl["TCU12"]["CUR_GR"]
     if gear2 == 0:
         self.gear_tcu = "park"
-    elif gear2 == 12:
+    elif gear2 == 14:
         self.gear_tcu = "reverse"
-    elif gear2 > 0 && gear2 < 12:
+    elif gear2 > 0 and gear2 < 14:    # unaware of anything over 8 currently
         self.gear_tcu = "drive"
     else:
         self.gear_tcu = "unknown"
