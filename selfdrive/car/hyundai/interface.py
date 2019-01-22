@@ -107,7 +107,11 @@ class CarInterface(object):
     elif candidate == CAR.SANTA_FE:  #AWD
       ret.mass = 3982 * CV.LB_TO_KG
       ret.wheelbase = 2.766
-      ret.steerRatio = 13.321 
+      ret.steerRatio = 13.321
+    elif candidate == CAR.KONA:
+      ret.mass = 1360
+      ret.wheelbase = 2.601
+      ret.steerRatio = 12.916
 
     ret.mass += std_cargo
     ret.minEnableSpeed = -1.   # enable is done by stock ACC, so ignore this
