@@ -50,7 +50,7 @@ def get_can_parser(CP):
     ("CF_Clu_InhibitR", "CLU15", 0),
 
     ("CF_Lvr_Gear","LVR12",0),
-    ("CF_Lvr_CruiseSet","LVR12",0),
+    ("CF_Lvr_CruiseSet", "LVR12", 0),
 
     ("CUR_GR", "TCU12",0),
 
@@ -78,6 +78,7 @@ def get_can_parser(CP):
     ("VSetDis", "SCC11", 0),
     ("MainMode_ACC", "SCC11", 0),
     ("SCCInfoDisplay", "SCC11", 0),
+    ("TauGapSet", "SCC11", 0),
     ("ACCMode", "SCC12", 1),
 
     ("SAS_Angle", "SAS11", 0),
@@ -125,7 +126,8 @@ def get_camera_parser(CP):
     ("CF_Lkas_Unknown1", "LKAS11", 0),
     ("CF_Lkas_Unknown2", "LKAS11", 0),
     ("CF_Lkas_ActToi", "LKAS11", 0),
-    ("CR_Lkas_StrToqReq", "LKAS11", 0)
+    ("CR_Lkas_StrToqReq", "LKAS11", 0),
+    ("CF_Lkas_MsgCount", "LKAS11", 0)
   ]
 
   checks = [("LKAS11", 100)]
@@ -140,7 +142,7 @@ class CarState(object):
                       ["","",[""]], \
                       ["cam","CAM",[""]], \
                       ["alwon", "MAD",[""]], \
-                      ["sound", "SND", [""]]]
+                      ["", "", [""]]]
 
     # ALCA PARAMS
     # max REAL delta angle for correction vs actuator
@@ -234,8 +236,13 @@ class CarState(object):
 
     self.park_brake = cp.vl["CGW1"]['CF_Gway_ParkBrakeSw']
     self.main_on = True
-    self.acc_active = (cp.vl["LVR12"]["CF_Lvr_CruiseSet"] > 2)
-    self.acc_active_real = (cp.vl["LVR12"]["CF_Lvr_CruiseSet"] > 2)
+    if cp.vl["SCC11"]["TauGapSet"] > 0:
+        self.acc_active = (cp.vl["SCC12"]['ACCMode'] != 0) if not self.cstm_btns.get_button_status("alwon") else \
+            (cp.vl["SCC11"]["MainMode_ACC"] != 0)  # I'm Dangerous!
+        self.acc_active_real = (cp.vl["SCC12"]['ACCMode'] !=0)
+    else:
+        self.acc_active = (cp.vl["LVR12"]["CF_Lvr_CruiseSet"] > 2)
+        self.acc_active_real = (cp.vl["LVR12"]["CF_Lvr_CruiseSet"] > 2)
     self.pcm_acc_status = int(self.acc_active)
 
     # calc best v_ego estimate, by averaging two opposite corners
@@ -257,7 +264,8 @@ class CarState(object):
     self.a_ego = float(v_ego_x[1])
     is_set_speed_in_mph = int(cp.vl["CLU11"]["CF_Clu_SPEED_UNIT"])
     speed_conv = CV.MPH_TO_MS if is_set_speed_in_mph else CV.KPH_TO_MS
-    self.cruise_set_speed = cp.vl["LVR12"]["CF_Lvr_CruiseSet"] * speed_conv
+
+    self.cruise_set_speed = (cp.vl["SCC11"]['VSetDis'] * speed_conv) if (cp.vl["SCC11"]["TauGapSet"] > 0) else (cp.vl["LVR12"]["CF_Lvr_CruiseSet"] * speed_conv)
     self.standstill = not self.v_wheel > 0.1
 
     self.angle_steers = cp.vl["SAS11"]['SAS_Angle']
@@ -274,7 +282,7 @@ class CarState(object):
     self.brake_error = 0
     self.steer_torque_driver = cp.vl["MDPS12"]['CR_Mdps_StrColTq']
     self.steer_torque_motor = cp.vl["MDPS12"]['CR_Mdps_OutTq']
-    self.stopped = False
+    self.stopped = cp.vl["SCC11"]['SCCInfoDisplay'] == 4. if (cp.vl["SCC11"]["TauGapSet"] > 0) else False
 
     self.user_brake = 0
 
@@ -322,7 +330,6 @@ class CarState(object):
         self.gear_tcu = "unknown"
 
     # save the entire LKAS11, CLU11 and MDPS12
-    #print cp_cam.can_valid, cp_cam2.can_valid
     if cp_cam.can_valid == True:
       self.lkas11 = cp_cam.vl["LKAS11"]
       self.camcan = 2
