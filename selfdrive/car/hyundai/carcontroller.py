@@ -45,6 +45,7 @@ class CarController(object):
     self.speed_adjusted = False
     self.checksum = "NONE"
     self.en_cnt = 0
+    self.apply_steer_ang = 0.0
 
     #self.ALCA = ALCAController(self,True,False)  # Enabled True and SteerByAngle only False
 
@@ -117,16 +118,16 @@ class CarController(object):
       if lkas:
         apply_steer = 0
       else:
-        apply_steer_ang = 0.0
+        self.apply_steer_ang = 0.0
         self.en_cnt = 0
 
-    if abs(apply_steer_ang - apply_steer_ang_req) > 0.02 and self.en_spas == 5:
-      if apply_steer_ang_req > apply_steer_ang:
-        apply_steer_ang += 0.1
+    if abs(self.apply_steer_ang - apply_steer_ang_req) > 0.02 and self.en_spas == 5:
+      if apply_steer_ang_req > self.apply_steer_ang:
+        self.apply_steer_ang += 0.1
       else:
-        apply_steer_ang -= 0.1
+        self.apply_steer_ang -= 0.1
     else:
-      apply_steer_ang = CS.angle_steers
+      self.apply_steer_ang = CS.mdps11_strang
 
     steer_req = 1 if enabled else 0
 
@@ -148,15 +149,15 @@ class CarController(object):
 
     # SPAS11 50hz
     if (self.cnt % 2) == 0:
-      if self.en_cnt < 7 and enabled:
+      if self.en_cnt < 7 and enabled and not lkas:
         self.en_cnt += 1
         self.en_spas = 4
-      elif self.en_cnt >= 7 and enabled:
+      elif self.en_cnt >= 7 and enabled and not lkas:
         self.en_spas = 5
       else:
         self.en_spas = 3
 
-      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), self.en_spas, apply_steer_ang))
+      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), self.en_spas, self.apply_steer_ang))
       #can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), CS.mdps11_strang))
     # SPAS12 20Hz
     if (self.cnt % 5) == 0:
