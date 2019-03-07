@@ -93,7 +93,7 @@ class CarController(object):
     #alca_angle, alca_steer, alca_enabled, turn_signal_needed = self.ALCA.update(enabled, CS, self.cnt, actuators)
     #if force_enable and not CS.acc_active:
     apply_steer = int(round(actuators.steer * SteerLimitParams.STEER_MAX))
-    apply_steer_ang = np.clip(actuators.steerAngle, -5.0, 5.0)
+    apply_steer_ang_req = np.clip(actuators.steerAngle, -15.0, 15.0)
     #else:
     #  apply_steer = int(round(alca_steer * SteerLimitParams.STEER_MAX))
 
@@ -120,6 +120,14 @@ class CarController(object):
         apply_steer_ang = 0.0
         self.en_cnt = 0
 
+    if abs(apply_steer_ang - apply_steer_ang_req) > 0.02 and self.en_spas == 5:
+      if apply_steer_ang_req > apply_steer_ang:
+        apply_steer_ang += 0.1
+      else:
+        apply_steer_ang -= 0.1
+    else:
+      apply_steer_ang = CS.angle_steers
+
     steer_req = 1 if enabled else 0
 
     self.apply_steer_last = apply_steer
@@ -142,13 +150,13 @@ class CarController(object):
     if (self.cnt % 2) == 0:
       if self.en_cnt < 7 and enabled:
         self.en_cnt += 1
-        en_spas = 4
+        self.en_spas = 4
       elif self.en_cnt >= 7 and enabled:
-        en_spas = 5
+        self.en_spas = 5
       else:
-        en_spas = 3
+        self.en_spas = 3
 
-      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), CS.angle_steers, en_spas, apply_steer_ang))
+      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), self.en_spas, apply_steer_ang))
       #can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), CS.mdps11_strang))
     # SPAS12 20Hz
     if (self.cnt % 5) == 0:
