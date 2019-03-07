@@ -2,7 +2,7 @@ from selfdrive.car import limit_steer_rate
 from selfdrive.boardd.boardd import can_list_to_can_capnp
 from selfdrive.car.hyundai.hyundaican import create_lkas11, \
                                              create_clu11, create_mdps12, \
-                                             learn_checksum
+                                             learn_checksum, create_spas11, create_spas12
 from selfdrive.car.hyundai.values import Buttons, CAR, FEATURES
 from selfdrive.can.packer import CANPacker
 #from selfdrive.car.modules.ALCA_module import ALCAController
@@ -120,6 +120,7 @@ class CarController(object):
     self.lkas11_cnt = self.cnt % 0x10
     self.clu11_cnt = self.cnt % 0x10
     self.mdps12_cnt = self.cnt % 0x100
+    self.spas_cnt = self.cnt % 0x200
 
     can_sends.append(create_lkas11(self.packer, self.car_fingerprint, apply_steer, steer_req, self.lkas11_cnt, \
                                    enabled, CS.lkas11, hud_alert, (CS.cstm_btns.get_button_status("cam") > 0), \
@@ -127,6 +128,14 @@ class CarController(object):
 
     can_sends.append(create_mdps12(self.packer, self.car_fingerprint, self.mdps12_cnt, CS.mdps12, CS.lkas11, \
                                     CS.camcan, self.checksum))
+
+    # SPAS11 50hz
+    if (self.cnt % 2) == 0:
+      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), CS.angle_steers))
+      #can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), CS.mdps11_strang))
+    # SPAS12 20Hz
+    if (self.cnt % 5) == 0:
+      can_sends.append(create_spas12(self.packer))
 
     if pcm_cancel_cmd and (not force_enable):
       can_sends.append(create_clu11(self.packer, CS.clu11, Buttons.CANCEL, 0))
