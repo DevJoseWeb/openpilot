@@ -44,6 +44,7 @@ class CarController(object):
     self.speed_conv = 3.6
     self.speed_adjusted = False
     self.checksum = "NONE"
+    self.en_cnt = 0
 
     #self.ALCA = ALCAController(self,True,False)  # Enabled True and SteerByAngle only False
 
@@ -109,7 +110,7 @@ class CarController(object):
       turning_signal = 0
 
     # Use LKAS or SPAS
-    lkas = True
+    lkas = False
 
     # If ALCA is disabled, and turning indicators are turned on, we do not want OP to steer,
     if not enabled or (turning_signal and not alca_enabled):
@@ -117,6 +118,7 @@ class CarController(object):
         apply_steer = 0
       else:
         apply_steer_ang = 0.0
+        self.en_cnt = 0
 
     steer_req = 1 if enabled else 0
 
@@ -138,7 +140,15 @@ class CarController(object):
 
     # SPAS11 50hz
     if (self.cnt % 2) == 0:
-      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), CS.angle_steers, False if lkas else enabled, apply_steer_ang))
+      if self.en_cnt < 7 and enabled:
+        self.en_cnt += 1
+        en_spas = 4
+      elif self.en_cnt >= 7 and enabled:
+        en_spas = 5
+      else:
+        en_spas = 3
+
+      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), CS.angle_steers, en_spas, apply_steer_ang))
       #can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), CS.mdps11_strang))
     # SPAS12 20Hz
     if (self.cnt % 5) == 0:
