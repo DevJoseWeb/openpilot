@@ -143,11 +143,11 @@ def learn_checksum(packer, lkas11):
 
     return "NONE"
 
-def create_spas11(packer, cnt, str_ang):
+def create_spas11(packer, cnt, str_ang, enabled, apply_steer):
   values = {
-    "CF_Spas_Stat": 3,
+    "CF_Spas_Stat": 5 if enabled else 3,
     "CF_Spas_TestMode": 0,
-    "CR_Spas_StrAngCmd": str_ang,
+    "CR_Spas_StrAngCmd": apply_steer if enabled else str_ang,
     "CF_Spas_BeepAlarm": 0,
     "CF_Spas_Mode_Seq": 2,
     "CF_Spas_AliveCnt": cnt,

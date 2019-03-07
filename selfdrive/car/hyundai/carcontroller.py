@@ -92,6 +92,7 @@ class CarController(object):
     #alca_angle, alca_steer, alca_enabled, turn_signal_needed = self.ALCA.update(enabled, CS, self.cnt, actuators)
     #if force_enable and not CS.acc_active:
     apply_steer = int(round(actuators.steer * SteerLimitParams.STEER_MAX))
+    apply_steer_ang = np.clip(actuators.steerAngle, -5.0, 5.0)
     #else:
     #  apply_steer = int(round(alca_steer * SteerLimitParams.STEER_MAX))
 
@@ -107,9 +108,15 @@ class CarController(object):
     else:
       turning_signal = 0
 
+    # Use LKAS or SPAS
+    lkas = True
+
     # If ALCA is disabled, and turning indicators are turned on, we do not want OP to steer,
     if not enabled or (turning_signal and not alca_enabled):
-      apply_steer = 0
+      if lkas:
+        apply_steer = 0
+      else:
+        apply_steer_ang = 0.0
 
     steer_req = 1 if enabled else 0
 
@@ -123,7 +130,7 @@ class CarController(object):
     self.spas_cnt = self.cnt % 0x200
 
     can_sends.append(create_lkas11(self.packer, self.car_fingerprint, apply_steer, steer_req, self.lkas11_cnt, \
-                                   enabled, CS.lkas11, hud_alert, (CS.cstm_btns.get_button_status("cam") > 0), \
+                                   enabled if lkas else False, CS.lkas11, hud_alert, (CS.cstm_btns.get_button_status("cam") > 0), \
                                    True, self.checksum))
 
     can_sends.append(create_mdps12(self.packer, self.car_fingerprint, self.mdps12_cnt, CS.mdps12, CS.lkas11, \
@@ -131,7 +138,7 @@ class CarController(object):
 
     # SPAS11 50hz
     if (self.cnt % 2) == 0:
-      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), CS.angle_steers))
+      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), CS.angle_steers, False if lkas else enabled, apply_steer_ang))
       #can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), CS.mdps11_strang))
     # SPAS12 20Hz
     if (self.cnt % 5) == 0:
