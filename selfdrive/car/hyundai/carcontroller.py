@@ -121,11 +121,11 @@ class CarController(object):
         self.apply_steer_ang = 0.0
         self.en_cnt = 0
 
-    if abs(self.apply_steer_ang - apply_steer_ang_req) > 0.02 and self.en_spas == 5:
+    if abs(self.apply_steer_ang - apply_steer_ang_req) > 0.4 and self.en_spas == 5:
       if apply_steer_ang_req > self.apply_steer_ang:
-        self.apply_steer_ang += 0.1
+        self.apply_steer_ang += 0.3
       else:
-        self.apply_steer_ang -= 0.1
+        self.apply_steer_ang -= 0.3
     else:
       self.apply_steer_ang = CS.mdps11_strang
 
