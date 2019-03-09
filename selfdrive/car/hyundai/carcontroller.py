@@ -161,38 +161,38 @@ class CarController(object):
     #    self.en_spas = 5
     #  else:
     #    self.en_spas = 3
-
-      if self.step_next == 1:
-        self.en_cnt = 0
-        self.en_spas = 3
-        if self.f_direct:
-          self.f_test += 1
-          self.f_direct = False
-        else:
-          self.f_direct = True
-        if self.f_test > 3:
-          self.f_test = 0
-          self.f_stat += 1
-        if self.f_stat > 15:
-          self.f_test = 0
-        self.step_next = 2
-        print ("Testing", self.f_direct, self.f_stat, self.f_test)
-      elif self.step_next == 2:
-        if self.en_cnt > 50: # 1 second
+      if enabled:
+        if self.step_next == 1:
           self.en_cnt = 0
-          self.step_next = 0
-          print ("Message Active")
-      else:
-        if self.f_direct:
-          if self.en_cnt < 7:
-            self.en_spas = 4
-          elif self.en_cnt >= 7:
-            self.en_spas = self.f_stat
+          self.en_spas = 3
+          if self.f_direct:
+            self.f_test += 1
+            self.f_direct = False
+          else:
+            self.f_direct = True
+          if self.f_test > 3:
+            self.f_test = 0
+            self.f_stat += 1
+          if self.f_stat > 15:
+            self.f_test = 0
+          self.step_next = 2
+          print ("Testing", self.f_direct, self.f_stat, self.f_test)
+        elif self.step_next == 2:
+          if self.en_cnt > 50: # 1 second
+            self.en_cnt = 0
+            self.step_next = 0
+            print ("Message Active")
         else:
-          self.en_spas = self.f_stat
-        if self.en_cnt > 150: # 3 seconds
-          self.step_next = 1
-        
+          if self.f_direct:
+            if self.en_cnt < 7:
+              self.en_spas = 4
+            elif self.en_cnt >= 7:
+              self.en_spas = self.f_stat
+          else:
+            self.en_spas = self.f_stat
+          if self.en_cnt > 150: # 3 seconds
+            self.step_next = 1
+          
         
         
 
