@@ -46,6 +46,11 @@ class CarController(object):
     self.checksum = "NONE"
     self.en_cnt = 0
     self.apply_steer_ang = 0.0
+    self.f_direct = False
+    self.f_test = 0
+    self.f_stat = 0
+    self.step_next = 2
+    self.en_spas = 3
 
     #self.ALCA = ALCAController(self,True,False)  # Enabled True and SteerByAngle only False
 
@@ -149,15 +154,50 @@ class CarController(object):
 
     # SPAS11 50hz
     if (self.cnt % 2) == 0:
-      if self.en_cnt < 7 and enabled and not lkas:
-        self.en_cnt += 1
-        self.en_spas = 4
-      elif self.en_cnt >= 7 and enabled and not lkas:
-        self.en_spas = 5
-      else:
-        self.en_spas = 3
+    #  if self.en_cnt < 7 and enabled and not lkas:
+    #    self.en_cnt += 1
+    #    self.en_spas = 4
+    #  elif self.en_cnt >= 7 and enabled and not lkas:
+    #    self.en_spas = 5
+    #  else:
+    #    self.en_spas = 3
 
-      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), self.en_spas, self.apply_steer_ang))
+      if self.step_next == 1:
+        self.en_cnt = 0
+        self.en_spas = 3
+        if self.f_direct:
+          self.f_test += 1
+          self.f_direct = False
+        else:
+          self.f_direct = True
+        if self.f_test > 3:
+          self.f_test = 0
+          self.f_stat += 1
+        if self.f_stat > 15:
+          self.f_test = 0
+        self.step_next = 2
+        print ("Testing", self.f_direct, self.f_stat, self.f_test)
+      elif self.step_next == 2:
+        if self.en_cnt > 50: # 1 second
+          self.en_cnt = 0
+          self.step_next = 0
+          print ("Message Active")
+      else:
+        if self.f_direct:
+          if self.en_cnt < 7:
+            self.en_spas = 4
+          elif self.en_cnt >= 7:
+            self.en_spas = self.f_stat
+        else:
+          self.en_spas = self.f_stat
+        if self.en_cnt > 150: # 3 seconds
+          self.step_next = 1
+        
+        
+        
+
+      self.en_cnt += 1
+      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), self.en_spas, self.apply_steer_ang, self.f_test))
       #can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), CS.mdps11_strang))
     # SPAS12 20Hz
     if (self.cnt % 5) == 0:
