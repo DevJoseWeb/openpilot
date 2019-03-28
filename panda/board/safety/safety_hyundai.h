@@ -59,17 +59,17 @@ static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   // Car CAN -- Send everything to LKAS
   if (bus_num == 0) {
-    return (uint8_t)(1);
+    return (uint8_t)(2);
   }
 
   // LKAS CAN -- Send everything to Car 
-  if (bus_num == 1) {
+  if (bus_num == 2) {
     if (addr == 832) return -1;  // Except LKAS11
     return (uint8_t)(0);
   }
 
   // MDPS CAN -- Send everything to Car
-  if (bus_num == 2) {
+  if (bus_num == 1) {
     return (uint8_t)(0);
   }
 
@@ -83,19 +83,19 @@ static int hyundai_fwd_hook2(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     if (addr == 790) return -1;  // Except EMS11
     if (addr == 912) return -1;  // Except SPAS11
     if (addr == 1268) return -1; // Except SPAS12
-    return (uint8_t)(2);
+    return (uint8_t)(1);
   }
 
   // LKAS CAN -- Send everything to MDPS
-  if (bus_num == 1) {
+  if (bus_num == 2) {
     if (addr == 832) return -1;  // Except LKAS11
-    return (uint8_t)(2);
+    return (uint8_t)(1);
   }
 
   // MDPS CAN -- Send everything to LKAS
-  if (bus_num == 2) {
+  if (bus_num == 1) {
     if (addr == 593) return -1;  // Except MDPS11
-    return (uint8_t)(1);
+    return (uint8_t)(2);
   }
 
   return -1;

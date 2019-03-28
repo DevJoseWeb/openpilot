@@ -11,6 +11,20 @@ def get_can_parser(CP):
 
   signals = [
     # sig_name, sig_address, default
+    ("SWI_IGK", "EMS11", 0),
+    ("F_N_ENG", "EMS11", 0),
+    ("ACK_TCS", "EMS11", 0),
+    ("PUC_STAT", "EMS11", 0),
+    ("TQ_COR_STAT", "EMS11", 0),
+    ("RLY_AC", "EMS11", 0),
+    ("F_SUB_TQI", "EMS11", 0),
+    ("TQI_ACOR", "EMS11", 0),
+    ("N", "EMS11", 0),
+    ("TQI", "EMS11", 0),
+    ("TQFR", "EMS11", 0),
+    ("VS", "EMS11", 0),
+    ("RATIO_TQI_BAS_MAX_STND", "EMS11", 0),
+
     ("WHL_SPD_FL", "WHL_SPD11", 0),
     ("WHL_SPD_FR", "WHL_SPD11", 0),
     ("WHL_SPD_RL", "WHL_SPD11", 0),
@@ -349,8 +363,11 @@ class CarState(object):
     else:
       self.camcan = 0
 
+    self.ems11_speed = cp.vl["EMS11"]["VS"]
+
     self.clu11 = cp.vl["CLU11"]
     self.mdps12 = cp.vl["MDPS12"]
+    self.ems11 = cp.vl["EMS11"]
 
     # Lane Change Assist Messages
     self.lca_left = cp.vl["LCA11"]["CF_Lca_IndLeft"]

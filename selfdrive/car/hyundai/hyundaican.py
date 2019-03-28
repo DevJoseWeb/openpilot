@@ -7,7 +7,7 @@ def make_can_msg(addr, dat, alt):
   return [addr, 0, dat, alt]
 
 def create_lkas11(packer, car_fingerprint, apply_steer, steer_req, cnt, \
-        enabled, lkas11, hud_alert, use_stock, keep_stock, checksum):
+        enabled, lkas11, hud_alert, use_stock, keep_stock, can, checksum):
   if enabled:
     use_stock = False
 
@@ -41,7 +41,7 @@ def create_lkas11(packer, car_fingerprint, apply_steer, steer_req, cnt, \
     "CF_Lkas_Unknown2": lkas11["CF_Lkas_Unknown2"] if keep_stock else 0,
   }
 
-  dat = packer.make_can_msg("LKAS11", 0, values)[2]
+  dat = packer.make_can_msg("LKAS11", can, values)[2]
 
   if checksum == "crc8":
     dat = dat[:6] + dat[7]
@@ -55,17 +55,17 @@ def create_lkas11(packer, car_fingerprint, apply_steer, steer_req, cnt, \
 
   values["CF_Lkas_Chksum"] = checksumc
 
-  return packer.make_can_msg("LKAS11", 0, values)
+  return packer.make_can_msg("LKAS11", can, values)
 
-def create_clu11(packer, clu11, button, cnt):
+def create_clu11(packer, clu11, button, cnt, speed, speed_unit, can):
   values = {
     "CF_Clu_CruiseSwState": button,
     "CF_Clu_CruiseSwMain": clu11["CF_Clu_CruiseSwMain"],
     "CF_Clu_SldMainSW": clu11["CF_Clu_SldMainSW"],
     "CF_Clu_ParityBit1": clu11["CF_Clu_ParityBit1"],
     "CF_Clu_VanzDecimal": clu11["CF_Clu_VanzDecimal"],
-    "CF_Clu_Vanz": clu11["CF_Clu_Vanz"],
-    "CF_Clu_SPEED_UNIT": clu11["CF_Clu_SPEED_UNIT"],
+    "CF_Clu_Vanz": clu11["CF_Clu_Vanz"] if speed == -1 else speed,
+    "CF_Clu_SPEED_UNIT": clu11["CF_Clu_SPEED_UNIT"] if speed_unit == -1 else speed_unit,
     "CF_Clu_DetentOut": clu11["CF_Clu_DetentOut"],
     "CF_Clu_RheostatLevel": clu11["CF_Clu_RheostatLevel"],
     "CF_Clu_CluInfo": clu11["CF_Clu_CluInfo"],
@@ -73,9 +73,9 @@ def create_clu11(packer, clu11, button, cnt):
     "CF_Clu_AliveCnt1": cnt,
   }
 
-  return packer.make_can_msg("CLU11", 0, values)
+  return packer.make_can_msg("CLU11", can, values)
 
-def create_mdps12(packer, car_fingerprint, cnt, mdps12, lkas11, camcan, checksum):
+def create_mdps12(packer, car_fingerprint, cnt, mdps12, lkas11, can, checksum):
   values = {
     "CR_Mdps_StrColTq": mdps12["CR_Mdps_StrColTq"],
     "CF_Mdps_Def": mdps12["CF_Mdps_Def"],
@@ -91,12 +91,12 @@ def create_mdps12(packer, car_fingerprint, cnt, mdps12, lkas11, camcan, checksum
   }
 
   if not (checksum == "crc8"):
-    dat = packer.make_can_msg("MDPS12", camcan, values)[2]
+    dat = packer.make_can_msg("MDPS12", can, values)[2]
     dat = [ord(i) for i in dat]
     checksum = (dat[0] + dat[1] + dat[2] + dat[4] + dat[5] + dat[6] + dat[7]) % 256
     values["CF_Mdps_Chksum2"] = checksum
 
-  return packer.make_can_msg("MDPS12", camcan, values)
+  return packer.make_can_msg("MDPS12", can, values)
 
 def learn_checksum(packer, lkas11):
     # Learn checksum used
@@ -148,7 +148,7 @@ def learn_checksum(packer, lkas11):
 
     return "NONE"
 
-def create_spas11(packer, cnt, en_spas, apply_steer, checksum):
+def create_spas11(packer, cnt, en_spas, apply_steer, can, checksum):
   values = {
     "CF_Spas_Stat": en_spas,
     "CF_Spas_TestMode": 0,
@@ -160,7 +160,7 @@ def create_spas11(packer, cnt, en_spas, apply_steer, checksum):
     "CF_Spas_PasVol": 0,
   }
 
-  dat = packer.make_can_msg("SPAS11", 0, values)[2]
+  dat = packer.make_can_msg("SPAS11", can, values)[2]
   if checksum == "crc8":
     dat = dat[:6]
     values["CF_Spas_Chksum"] = hyundai_checksum(dat)
@@ -168,9 +168,9 @@ def create_spas11(packer, cnt, en_spas, apply_steer, checksum):
     dat = [ord(i) for i in dat]
     values["CF_Spas_Chksum"] = sum(dat[:6]) % 256
 
-  return packer.make_can_msg("SPAS11", 0, values)
+  return packer.make_can_msg("SPAS11", can, values)
 
-def create_spas12(packer):
+def create_spas12(packer, can):
   values = {
     "CF_Spas_HMI_Stat": 0,
     "CF_Spas_Disp": 0,
@@ -197,4 +197,23 @@ def create_spas12(packer):
     "CF_Spas_RRS_Alarm": 0,
   }
 
-  return packer.make_can_msg("SPAS12", 0, values)
+  return packer.make_can_msg("SPAS12", can, values)
+
+def create_ems11(packer, ems11, speed, can):
+  values = {
+    "SWI_IGK" : ems11["SWI_IGK"],
+    "F_N_ENG" : ems11["F_N_ENG"],
+    "ACK_TCS" : ems11["ACK_TCS"],
+    "PUC_STAT" : ems11["PUC_STAT"],
+    "TQ_COR_STAT" : ems11["TQ_COR_STAT"],
+    "RLY_AC" : ems11["RLY_AC"],
+    "F_SUB_TQI" : ems11["F_SUB_TQI"],
+    "TQI_ACOR" : ems11["TQI_ACOR"],
+    "N" : ems11["N"],
+    "TQI" : ems11["TQI"],
+    "TQFR" : ems11["TQFR"],
+    "VS" : speed,
+    "RATIO_TQI_BAS_MAX_STND" : ems11["RATIO_TQI_BAS_MAX_STND"],
+  }
+
+  return packer.make_can_msg("EMS11", can, values)

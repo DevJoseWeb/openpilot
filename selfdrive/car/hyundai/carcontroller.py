@@ -1,7 +1,7 @@
 from selfdrive.car import limit_steer_rate
 from selfdrive.boardd.boardd import can_list_to_can_capnp
 from selfdrive.car.hyundai.hyundaican import create_lkas11, \
-                                             create_clu11, create_mdps12, \
+                                             create_clu11, create_mdps12, create_ems11, \
                                              learn_checksum, create_spas11, create_spas12
 from selfdrive.car.hyundai.values import Buttons, CAR, FEATURES
 from selfdrive.can.packer import CANPacker
@@ -146,9 +146,9 @@ class CarController(object):
       turning_signal = 0
 
     # Use LKAS or SPAS
-    if CS.mdps11_stat == 7 or CS.v_wheel > 2.7:
+    if CS.mdps11_stat == 7:
       self.lkas = True
-    elif CS.v_wheel < 0.1:
+    else:
       self.lkas = False
     if self.spas_present:
       self.lkas = True
@@ -168,17 +168,32 @@ class CarController(object):
     can_sends = []
 
     self.lkas11_cnt = self.cnt % 0x10
-    self.clu11_cnt = self.cnt % 0x10
+    self.clu11_cnt = self.cnt % 0x20
     self.mdps12_cnt = self.cnt % 0x100
     self.spas_cnt = self.cnt % 0x200
 
     can_sends.append(create_lkas11(self.packer, self.car_fingerprint, apply_steer, steer_req, self.lkas11_cnt, \
                                   enabled if self.lkas else False, False if CS.camcan == 0 else CS.lkas11, hud_alert, (CS.cstm_btns.get_button_status("cam") > 0), \
-                                  (False if CS.camcan == 0 else True), self.checksum))
+                                  (False if CS.camcan == 0 else True), 0, self.checksum))
+    can_sends.append(create_lkas11(self.packer, self.car_fingerprint, apply_steer, steer_req, self.lkas11_cnt, \
+                                  enabled if self.lkas else False, False if CS.camcan == 0 else CS.lkas11, hud_alert, (CS.cstm_btns.get_button_status("cam") > 0), \
+                                  (False if CS.camcan == 0 else True), 1, self.checksum))
 
     if CS.camcan > 0:
       can_sends.append(create_mdps12(self.packer, self.car_fingerprint, self.mdps12_cnt, CS.mdps12, CS.lkas11, \
-                                    CS.camcan, self.checksum))
+                                    0, self.checksum))
+      can_sends.append(create_mdps12(self.packer, self.car_fingerprint, self.mdps12_cnt, CS.mdps12, CS.lkas11, \
+                                    2, self.checksum))
+
+    if (self.cnt % 2) == 0: 
+      if self.lkas or not enabled:
+        ems11_speed = CS.ems11_speed
+        can_sends.append(create_clu11(self.packer, CS.clu11, Buttons.NONE, clu11_cnt / 2, -1, -1, 1))
+      else:
+        ems11_speed = 0.2
+        can_sends.append(create_clu11(self.packer, CS.clu11, Buttons.NONE, clu11_cnt / 2, ems11_speed, 0, 1))
+    
+      can_sends.append(create_ems11(self.packer, CS.ems11, ems11_speed, 1))
 
     # SPAS11 50hz
     if (self.cnt % 2) == 0 and not self.spas_present:
@@ -202,18 +217,20 @@ class CarController(object):
 
       self.mdps11_stat_last = CS.mdps11_stat
       self.en_cnt += 1
-      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), self.en_spas, self.apply_steer_ang, self.checksum))
+      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), self.en_spas, self.apply_steer_ang, 0, self.checksum))
+      can_sends.append(create_spas11(self.packer, (self.spas_cnt / 2), self.en_spas, self.apply_steer_ang, 1, self.checksum))
     
     # SPAS12 20Hz
     if (self.cnt % 5) == 0 and not self.spas_present:
-      can_sends.append(create_spas12(self.packer))
+      can_sends.append(create_spas12(self.packer, 0))
+      can_sends.append(create_spas12(self.packer, 1))
 
     # Force Disable
     if pcm_cancel_cmd and (not force_enable):
-      can_sends.append(create_clu11(self.packer, CS.clu11, Buttons.CANCEL, 0))
+      can_sends.append(create_clu11(self.packer, CS.clu11, Buttons.CANCEL, 0, -1, -1, 0))
     elif CS.stopped and (self.cnt - self.last_resume_cnt) > 5:
       self.last_resume_cnt = self.cnt
-      can_sends.append(create_clu11(self.packer, CS.clu11, Buttons.RES_ACCEL, 0))
+      can_sends.append(create_clu11(self.packer, CS.clu11, Buttons.RES_ACCEL, 0, -1, -1, 0))
 
 
     # Speed Limit Related Stuff  Lot's of comments for others to understand!
@@ -263,9 +280,9 @@ class CarController(object):
     if CS.acc_active_real and not self.speed_adjusted and self.map_speed > (8.5 * self.speed_conv) and (self.cnt % 9 == 0 or self.cnt % 9 == 1):
       # Use some tolerance because of Floats being what they are...
       if (CS.cruise_set_speed * self.speed_conv) > (self.map_speed * 1.005):
-        can_sends.append(create_clu11(self.packer, CS.clu11, Buttons.SET_DECEL, (1 if self.cnt % 9 == 1 else 0)))
+        can_sends.append(create_clu11(self.packer, CS.clu11, Buttons.SET_DECEL, (1 if self.cnt % 9 == 1 else 0), -1, -1, 0))
       elif (CS.cruise_set_speed * self.speed_conv) < (self.map_speed / 1.005):
-        can_sends.append(create_clu11(self.packer, CS.clu11, Buttons.RES_ACCEL, (1 if self.cnt % 9 == 1 else 0)))
+        can_sends.append(create_clu11(self.packer, CS.clu11, Buttons.RES_ACCEL, (1 if self.cnt % 9 == 1 else 0), -1, -1, 0))
       # If nothing needed adjusting, then the speed has been set, which will lock out this control
       else:
         self.speed_adjusted = True
