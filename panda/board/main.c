@@ -119,7 +119,7 @@ int get_health_pkt(void *dat) {
 #endif
 
   health->controls_allowed = controls_allowed;
-  health->gas_interceptor_detected = gas_interceptor_detected;
+  //health->gas_interceptor_detected = gas_interceptor_detected;
 
   // DEPRECATED
   health->started_alt = 0;
