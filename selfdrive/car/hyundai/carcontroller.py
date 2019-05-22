@@ -5,7 +5,7 @@ from selfdrive.car.hyundai.hyundaican import create_lkas11, \
                                              learn_checksum, create_spas11, create_spas12
 from selfdrive.car.hyundai.values import Buttons, CAR, FEATURES
 from selfdrive.can.packer import CANPacker
-from selfdrive.car.modules.ALCA_module import ALCAController
+#from selfdrive.car.modules.ALCA_module import ALCAController
 import numpy as np
 import zmq
 import math
@@ -54,7 +54,7 @@ class CarController(object):
     self.lkas = False
     self.spas_present = True # TODO Make Automatic
 
-    self.ALCA = ALCAController(self,True,False)  # Enabled True and SteerByAngle only False
+    #self.ALCA = ALCAController(self,True,False)  # Enabled True and SteerByAngle only False
 
 
   def update(self, sendcan, enabled, CS, actuators, pcm_cancel_cmd, hud_alert):
@@ -107,20 +107,20 @@ class CarController(object):
       CS.UE.uiSetCarEvent(CS.cstm_btns.car_folder,CS.cstm_btns.car_name)
 
     # Get the angle from ALCA.
-    alca_enabled = False
-    alca_steer = 0.
-    alca_angle = 0.
+    #alca_enabled = False
+    #alca_steer = 0.
+    #alca_angle = 0.
     turn_signal_needed = 0
     # Update ALCA status and custom button every 0.1 sec.
-    if self.ALCA.pid == None:
-      self.ALCA.set_pid(CS)
-    self.ALCA.update_status(CS.cstm_btns.get_button_status("alca") > 0)
+    #if self.ALCA.pid == None:
+    #  self.ALCA.set_pid(CS)
+    #self.ALCA.update_status(CS.cstm_btns.get_button_status("alca") > 0)
 
-    alca_angle, alca_steer, alca_enabled, turn_signal_needed = self.ALCA.update(enabled, CS, self.cnt, actuators)
-    if force_enable and not CS.acc_active:
-      apply_steer = int(round(actuators.steer * SteerLimitParams.STEER_MAX))
-    else:
-      apply_steer = int(round(alca_steer * SteerLimitParams.STEER_MAX))
+    #alca_angle, alca_steer, alca_enabled, turn_signal_needed = self.ALCA.update(enabled, CS, self.cnt, actuators)
+    #if force_enable and not CS.acc_active:
+    apply_steer = int(round(actuators.steer * SteerLimitParams.STEER_MAX))
+    ##else:
+    #  apply_steer = int(round(alca_steer * SteerLimitParams.STEER_MAX))
 
     # SPAS limit angle extremes for safety
     apply_steer_ang_req = np.clip(actuators.steerAngle, -1*(SteerLimitParams.STEER_ANG_MAX), SteerLimitParams.STEER_ANG_MAX)
@@ -136,8 +136,8 @@ class CarController(object):
     # Limit steer rate for safety
     apply_steer = limit_steer_rate(apply_steer, self.apply_steer_last, SteerLimitParams, CS.steer_torque_driver)
 
-    if alca_enabled:
-      self.turning_signal_timer = 0
+    #if alca_enabled:
+    #  self.turning_signal_timer = 0
 
     if self.turning_signal_timer > 0:
       self.turning_signal_timer = self.turning_signal_timer - 1
@@ -154,7 +154,7 @@ class CarController(object):
       self.lkas = True
 
     # If ALCA is disabled, and turning indicators are turned on, we do not want OP to steer,
-    if not enabled or (turning_signal and not alca_enabled):
+    if not enabled or (turning_signal):
       if self.lkas:
         apply_steer = 0
       else:
