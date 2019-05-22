@@ -141,15 +141,6 @@ static void honda_init(int16_t param) {
   #endif
 }
 
-const safety_hooks honda_hooks = {
-  .init = honda_init,
-  .rx = honda_rx_hook,
-  .tx = honda_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
-  .ignition = default_ign_hook,
-  .fwd = nooutput_fwd_hook,
-};
-
 static void honda_bosch_init(int16_t param) {
   controls_allowed = 0;
   bosch_hardware = true;
