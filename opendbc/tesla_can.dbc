@@ -310,49 +310,7 @@ BO_ 840 GTW_status: 8 GTW
  SG_ GTW_statusChecksum : 63|8@0+ (1,0) [0|255] ""  NEO
  SG_ GTW_statusCounter : 51|4@0+ (1,0) [0|15] ""  NEO
 
-BO_ 1361 GAS_COMMAND: 6 EON
- SG_ GAS_COMMAND : 7|16@0+ (0.0507968128,-22.85856576) [0|1] "" INTERCEPTOR
- SG_ GAS_COMMAND2 : 23|16@0+ (0.1015936256,-22.85856576) [0|1] "" INTERCEPTOR
- SG_ ENABLE : 39|1@0+ (1,0) [0|1] "" INTERCEPTOR
- SG_ IDX : 35|4@0+ (1,0) [0|15] "" INTERCEPTOR
- SG_ CHECKSUM : 47|8@0+ (1,0) [0|3] "" INTERCEPTOR
-
-BO_ 1362 GAS_SENSOR: 6 INTERCEPTOR
- SG_ INTERCEPTOR_GAS : 7|16@0+ (0.0507968128,-22.85856576) [0|1] "" EON
- SG_ INTERCEPTOR_GAS2 : 23|16@0+ (0.1015936256,-22.85856576) [0|1] "" EON
- SG_ STATE : 35|4@0+ (1,0) [0|15] "" EON
- SG_ IDX : 39|4@0+ (1,0) [0|15] "" EON
- SG_ CHECKSUM : 47|8@0+ (1,0) [0|3] "" EON
-
-BO_ 920 GTW_carConfig: 8 GTW
- SG_ GTW_performanceConfig : 2|3@0+ (1,0) [0|0] "" NEO
- SG_ GTW_fourWheelDrive : 4|2@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_unknown1 : 5|1@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_dasHw : 7|2@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_parkAssistInstalled : 9|2@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_forwardRadarHw : 11|2@0+ (1,0) [0|0] "" NEO
- SG_ GTW_airSuspensionInstalled : 14|3@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_unknown2 : 15|1@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_country : 23|16@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_parkSensorGeometryType : 33|2@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_rhd : 34|1@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_bodyControlsType : 35|1@0+ (1,0) [0|0] "" NEO
- SG_ GTW_radarPosition : 39|4@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_rearCornerRadarHw : 41|2@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_frontCornerRadarHw : 43|2@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_epasType : 45|2@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_chassisType : 47|2@0+ (1,0) [0|2] ""  NEO
- SG_ GTW_wheelType : 52|5@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_rearSeatControllerMask : 55|3@0+ (1,0) [0|7] ""  NEO
- SG_ GTW_euVehicle : 56|1@0+ (1,0) [0|0] "" NEO
- SG_ GTW_foldingMirrorsInstalled : 57|1@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_brakeHwType : 59|2@0+ (1,0) [0|2] ""  NEO
- SG_ GTW_autopilot : 61|2@0+ (1,0) [0|0] ""  NEO
- SG_ GTW_unknown3 : 63|2@0+ (1,0) [0|0] ""  NEO
-
-
-
-
+CM_ "CHFFR_METRIC 1160 DAS_steeringAngleRequest STEER_ANGLE 0.1098666 180; CHFFR_METRIC 264 DI_motorRPM ENGINE_RPM 1 0";
 
 VAL_ 3 StW_Angl 16383 "SNA" ;
 VAL_ 3 StW_AnglSens_Id 2 "MUST" 0 "PSBL" 1 "SELF" ;
@@ -464,6 +422,3 @@ VAL_ 904 MCU_clusterReadyForDrive 0 "NO_SNA" 1 "YES" ;
 VAL_ 1160 DAS_steeringAngleRequest 16384 "ZERO_ANGLE" ;
 VAL_ 1160 DAS_steeringControlType 1 "ANGLE_CONTROL" 3 "DISABLED" 0 "NONE" 2 "RESERVED" ;
 VAL_ 1160 DAS_steeringHapticRequest 1 "ACTIVE" 0 "IDLE" ;
-VAL_ 1362 STATE 5 "FAULT_TIMEOUT" 4 "FAULT_STARTUP" 3 "FAULT_SCE" 2 "FAULT_SEND" 1 "FAULT_BAD_CHECKSUM" 0 "NO_FAULT" ;
-
-CM_ "CHFFR_METRIC 1160 DAS_steeringAngleRequest STEER_ANGLE 0.1098666 180; CHFFR_METRIC 264 DI_motorRPM ENGINE_RPM 1 0";

@@ -285,6 +285,7 @@ int main() {
   puts("**** INTERRUPTS ON ****\n");
   __enable_irq();
 
+
   // main pedal loop
   while (1) {
     pedal();
@@ -292,4 +293,3 @@ int main() {
 
   return 0;
 }
-

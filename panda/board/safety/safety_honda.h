@@ -136,6 +136,9 @@ static void honda_init(int16_t param) {
   controls_allowed = 0;
   bosch_hardware = false;
   honda_alt_brake_msg = false;
+  #ifdef PANDA
+    lline_relay_release();
+  #endif
 }
 
 const safety_hooks honda_hooks = {
@@ -152,6 +155,9 @@ static void honda_bosch_init(int16_t param) {
   bosch_hardware = true;
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = param == 1 ? true : false;
+  #ifdef PANDA
+    lline_relay_release();
+  #endif
 }
 
 static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
@@ -162,6 +168,16 @@ static int honda_bosch_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   return -1;
 }
 
+const safety_hooks honda_hooks = {
+  .init = honda_init,
+  .rx = honda_rx_hook,
+  .tx = honda_tx_hook,
+  .tx_lin = nooutput_tx_lin_hook,
+  .ignition = default_ign_hook,
+  .fwd = honda_fwd_hook,
+  .relay = nooutput_relay_hook,
+};
+
 const safety_hooks honda_bosch_hooks = {
   .init = honda_bosch_init,
   .rx = honda_rx_hook,
@@ -169,4 +185,5 @@ const safety_hooks honda_bosch_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = honda_bosch_fwd_hook,
+  .relay = nooutput_relay_hook,
 };
