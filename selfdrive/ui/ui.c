@@ -2331,6 +2331,7 @@ int main() {
       set_awake(s, true);
       // BB check touch area
       bb_handle_ui_touch(s,touch_x,touch_y);
+    }
     if (!s->vision_connected) {
       // Car is not started, keep in idle state and awake on touch events
       zmq_pollitem_t polls[1] = {{0}};
