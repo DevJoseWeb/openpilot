@@ -779,11 +779,6 @@ static void draw_chevron(UIState *s, float x_in, float y_in, float sz,
   nvgBeginPath(s->vg);
   float g_xo = sz/5;
   float g_yo = sz/10;
-  //BB added for printing the car
-  if (s->b.tri_state_switch == 2) {
-    nvgRestore(s->vg);
-    bb_ui_draw_car(s);
-  } else {
   if (x >= 0 && y >= 0.) {
     nvgMoveTo(s->vg, x+(sz*1.35)+g_xo, y+sz+g_yo);
     nvgLineTo(s->vg, x, y-g_xo);
@@ -838,18 +833,6 @@ static void ui_draw_lane_line(UIState *s, const model_path_vertices_data *pvd, N
   nvgRestore(s->vg);
 }
 
-static void ui_draw_lane(UIState *s, const PathData path, NVGcolor color) {
-  //BB added to make the line blue
-  if (s->b.tri_state_switch == 2) {
-    color = nvgRGBA(66, 220, 244,250);
-  }
-  //BB end
-  ui_draw_lane_line(s, path.points, 0.025*path.prob, color, false);
-  float var = min(path.std, 0.7);
-  color.a /= 4;
-  ui_draw_lane_line(s, path.points, -var, color, true);
-  ui_draw_lane_line(s, path.points, var, color, true);
-}
 
 static void update_track_data(UIState *s, bool is_mpc, track_vertices_data *pvd) {
   const UIScene *scene = &s->scene;
