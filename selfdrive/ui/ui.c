@@ -1046,9 +1046,7 @@ static void ui_draw_lane(UIState *s, const PathData *path, model_path_vertices_d
 
 static void ui_draw_vision_lanes(UIState *s) {
   const UIScene *scene = &s->scene;
-  //BB add to draw our lanes
-  if (s->b.tri_state_switch == 2) {
-    bb_draw_lane_fill(s);
+
   model_path_vertices_data *pvd = &s->model_path_vertices[0];
   if(s->model_changed) {
     update_all_lane_lines_data(s, scene->model.left_lane, pvd);
