@@ -1,13 +1,16 @@
-const int HYUNDAI_MAX_STEER = 300;
+const int HYUNDAI_MAX_STEER = 255;             // like stock
 const int HYUNDAI_MAX_RT_DELTA = 112;          // max delta torque allowed for real time checks
 const int32_t HYUNDAI_RT_INTERVAL = 250000;    // 250ms between real time checks
-const int HYUNDAI_MAX_RATE_UP = 6;
-const int HYUNDAI_MAX_RATE_DOWN = 8;
+const int HYUNDAI_MAX_RATE_UP = 3;
+const int HYUNDAI_MAX_RATE_DOWN = 7;
+const int HYUNDAI_DRIVER_TORQUE_ALLOWANCE = 50;
+const int HYUNDAI_DRIVER_TORQUE_FACTOR = 2;
 
 int hyundai_camera_detected = 0;
 int hyundai_camera_bus = 0;
 int hyundai_giraffe_switch_2 = 0;          // is giraffe switch 2 high?
 int hyundai_rt_torque_last = 0;
+int hyundai_desired_torque_last = 0;
 int hyundai_cruise_engaged_last = 0;
 uint32_t hyundai_ts_last = 0;
 struct sample_t hyundai_torque_driver;         // last few driver torques measured
@@ -38,25 +41,21 @@ static void hyundai_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   }
 
   // Find out which bus the camera is on
-  if (bus == 1 && addr == 832) {
-    hyundai_camera_bus = 1;
-  }
-  if (bus == 2 && addr == 832) {
-    hyundai_camera_bus = 2;
+  if (addr == 832) {
+    hyundai_camera_bus = bus;
   }
 
-  /* enter controls on rising edge of ACC, exit controls on ACC off
-  if ((to_push->RIR>>21) == 1057) {
-    // 2 bits: 13-14
-    int cruise_engaged = (to_push->RDLR >> 13) & 0x3;
-    if (cruise_engaged && !hyundai_cruise_engaged_last) {
-      controls_allowed = 1;
-    } else if (!cruise_engaged) {
-      controls_allowed = 0;
-    }
-    hyundai_cruise_engaged_last = cruise_engaged;
-  } */
+  // enter controls on rising edge of ACC, exit controls on ACC off
+//  if ((to_push->RIR>>21) == 1057) {
+//#    // 2 bits: 13-14
+//#    int cruise_engaged = (to_push->RDLR >> 13) & 0x3;
+//    if (cruise_engaged && !hyundai_cruise_engaged_last) {
   controls_allowed = 1;
+//    } else if (!cruise_engaged) {
+//      controls_allowed = 0;
+ //   }
+ //   hyundai_cruise_engaged_last = cruise_engaged;
+ // }
 
   // 832 is lkas cmd. If it is on camera bus, then giraffe switch 2 is high
   if ((to_push->RIR>>21) == 832 && (bus == hyundai_camera_bus) && (hyundai_camera_bus != 0)) {
@@ -89,17 +88,25 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (controls_allowed) {
 
       // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, HYUNDAI_MAX_STEER, -HYUNDAI_MAX_STEER);
+      //violation |= max_limit_check(desired_torque, HYUNDAI_MAX_STEER, -HYUNDAI_MAX_STEER);
+
+      // *** torque rate limit check ***
+      //violation |= driver_limit_check(desired_torque, hyundai_desired_torque_last, &hyundai_torque_driver,
+      //  HYUNDAI_MAX_STEER, HYUNDAI_MAX_RATE_UP, HYUNDAI_MAX_RATE_DOWN,
+       // HYUNDAI_DRIVER_TORQUE_ALLOWANCE, HYUNDAI_DRIVER_TORQUE_FACTOR);
+
+      // used next time
+      hyundai_desired_torque_last = desired_torque;
 
       // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, hyundai_rt_torque_last, HYUNDAI_MAX_RT_DELTA);
+      //violation |= rt_rate_limit_check(desired_torque, hyundai_rt_torque_last, HYUNDAI_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
-      uint32_t ts_elapsed = get_ts_elapsed(ts, hyundai_ts_last);
-      if (ts_elapsed > HYUNDAI_RT_INTERVAL) {
-        hyundai_rt_torque_last = desired_torque;
-        hyundai_ts_last = ts;
-      }
+      //uint32_t ts_elapsed = get_ts_elapsed(ts, hyundai_ts_last);
+      //if (ts_elapsed > HYUNDAI_RT_INTERVAL) {
+      //  hyundai_rt_torque_last = desired_torque;
+      //  hyundai_ts_last = ts;
+      //}
     }
 
     // no torque if controls is not allowed
@@ -109,6 +116,7 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // reset to 0 if either controls is not allowed or there's a violation
     if (violation || !controls_allowed) {
+      hyundai_desired_torque_last = 0;
       hyundai_rt_torque_last = 0;
       hyundai_ts_last = ts;
     }
@@ -121,25 +129,23 @@ static int hyundai_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   // FORCE CANCEL: safety check only relevant when spamming the cancel button.
   // ensuring that only the cancel button press is sent (VAL 4) when controls are off.
   // This avoids unintended engagements while still allowing resume spam
-  if (((to_send->RIR>>21) == 1265) && !controls_allowed && ((to_send->RDTR >> 4) & 0xFF) == 0) {
-    if ((to_send->RDLR & 0x7) != 4) return 0;
-  }
+  // TODO: fix bug preventing the button msg to be fwd'd on bus 2
+  //if (((to_send->RIR>>21) == 1265) && !controls_allowed && ((to_send->RDTR >> 4) & 0xFF) == 0) {
+  //  if ((to_send->RDLR & 0x7) != 4) return 0;
+  //}
 
   // 1 allows the message through
   return true;
 }
 
 static int hyundai_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
-  // forward cam to ccan and viceversa, except lkas cmd and mdps message
+  // forward cam to ccan and viceversa, except lkas cmd
   if ((bus_num == 0 || bus_num == hyundai_camera_bus) && hyundai_giraffe_switch_2) {
-    int addr = to_fwd->RIR>>21;
 
-    if (addr == 832 && bus_num == hyundai_camera_bus) return -1;
-    if (addr == 593 && bus_num == 0) return -1;
-    if (bus_num == 0) return (uint8_t)(hyundai_camera_bus);
-    if (bus_num == hyundai_camera_bus) return (uint8_t)(0);
+    if ((to_fwd->RIR>>21) == 832 && bus_num == hyundai_camera_bus) return -1;
+    if (bus_num == 0) return hyundai_camera_bus;
+    if (bus_num == hyundai_camera_bus) return 0;
   }
-
   return -1;
 }
 
