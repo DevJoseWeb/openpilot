@@ -784,28 +784,28 @@ static void draw_chevron(UIState *s, float x_in, float y_in, float sz,
     nvgRestore(s->vg);
     bb_ui_draw_car(s);
   } else {
-    if (x >= 0 && y >= 0.) {
-        nvgMoveTo(s->vg, x+(sz*1.35)+g_xo, y+sz+g_yo);
-        nvgLineTo(s->vg, x, y-g_xo);
-        nvgLineTo(s->vg, x-(sz*1.35)-g_xo, y+sz+g_yo);
-        nvgLineTo(s->vg, x+(sz*1.35)+g_xo, y+sz+g_yo);
-        nvgClosePath(s->vg);
-    }
-    nvgFillColor(s->vg, glowColor);
-    nvgFill(s->vg);
-
-    // chevron
-    nvgBeginPath(s->vg);
-    if (x >= 0 && y >= 0.) {
-        nvgMoveTo(s->vg, x+(sz*1.25), y+sz);
-        nvgLineTo(s->vg, x, y);
-        nvgLineTo(s->vg, x-(sz*1.25), y+sz);
-        nvgLineTo(s->vg, x+(sz*1.25), y+sz);
-        nvgClosePath(s->vg);
-    }
-    nvgFillColor(s->vg, fillColor);
-    nvgFill(s->vg);
+  if (x >= 0 && y >= 0.) {
+    nvgMoveTo(s->vg, x+(sz*1.35)+g_xo, y+sz+g_yo);
+    nvgLineTo(s->vg, x, y-g_xo);
+    nvgLineTo(s->vg, x-(sz*1.35)-g_xo, y+sz+g_yo);
+    nvgLineTo(s->vg, x+(sz*1.35)+g_xo, y+sz+g_yo);
+    nvgClosePath(s->vg);
   }
+  nvgFillColor(s->vg, glowColor);
+  nvgFill(s->vg);
+
+  // chevron
+  nvgBeginPath(s->vg);
+  if (x >= 0 && y >= 0.) {
+    nvgMoveTo(s->vg, x+(sz*1.25), y+sz);
+    nvgLineTo(s->vg, x, y);
+    nvgLineTo(s->vg, x-(sz*1.25), y+sz);
+    nvgLineTo(s->vg, x+(sz*1.25), y+sz);
+    nvgClosePath(s->vg);
+  }
+  nvgFillColor(s->vg, fillColor);
+  nvgFill(s->vg);
+
   nvgRestore(s->vg);
 }
 
@@ -851,7 +851,6 @@ static void ui_draw_lane(UIState *s, const PathData path, NVGcolor color) {
   ui_draw_lane_line(s, path.points, var, color, true);
 }
 
-static void ui_draw_track(UIState *s, bool is_mpc) {
 static void update_track_data(UIState *s, bool is_mpc, track_vertices_data *pvd) {
   const UIScene *scene = &s->scene;
   const PathData path = scene->model.path;
@@ -2070,22 +2069,22 @@ static void ui_update(UIState *s) {
         s->b.freeSpace=datad.freeSpace;
         //BB END CPU TEMP
       } else if (eventd.which == cereal_Event_uiLayoutState) {
-          struct cereal_UiLayoutState datad;
-          cereal_read_UiLayoutState(&datad, eventd.uiLayoutState);
-          s->scene.uilayout_sidebarcollapsed = datad.sidebarCollapsed;
-          s->scene.uilayout_mapenabled = datad.mapEnabled;
+        struct cereal_UiLayoutState datad;
+        cereal_read_UiLayoutState(&datad, eventd.uiLayoutState);
+        s->scene.uilayout_sidebarcollapsed = datad.sidebarCollapsed;
+        s->scene.uilayout_mapenabled = datad.mapEnabled;
 
-          bool hasSidebar = !s->scene.uilayout_sidebarcollapsed;
-          bool mapEnabled = s->scene.uilayout_mapenabled;
-          if (mapEnabled) {
-            s->scene.ui_viz_rx = hasSidebar ? (box_x+nav_w) : (box_x+nav_w-(bdr_s*4));
-            s->scene.ui_viz_rw = hasSidebar ? (box_w-nav_w) : (box_w-nav_w+(bdr_s*4));
-            s->scene.ui_viz_ro = -(sbr_w + 4*bdr_s);
-          } else {
-            s->scene.ui_viz_rx = hasSidebar ? box_x : (box_x-sbr_w+bdr_s*2);
-            s->scene.ui_viz_rw = hasSidebar ? box_w : (box_w+sbr_w-(bdr_s*2));
-            s->scene.ui_viz_ro = hasSidebar ? -(sbr_w - 6*bdr_s) : 0;
-          }
+        bool hasSidebar = !s->scene.uilayout_sidebarcollapsed;
+        bool mapEnabled = s->scene.uilayout_mapenabled;
+        if (mapEnabled) {
+          s->scene.ui_viz_rx = hasSidebar ? (box_x+nav_w) : (box_x+nav_w-(bdr_s*4));
+          s->scene.ui_viz_rw = hasSidebar ? (box_w-nav_w) : (box_w-nav_w+(bdr_s*4));
+          s->scene.ui_viz_ro = -(sbr_w + 4*bdr_s);
+        } else {
+          s->scene.ui_viz_rx = hasSidebar ? box_x : (box_x-sbr_w+bdr_s*2);
+          s->scene.ui_viz_rw = hasSidebar ? box_w : (box_w+sbr_w-(bdr_s*2));
+          s->scene.ui_viz_ro = hasSidebar ? -(sbr_w - 6*bdr_s) : 0;
+        }
       } else if (eventd.which == cereal_Event_liveMapData) {
         struct cereal_LiveMapData datad;
         cereal_read_LiveMapData(&datad, eventd.liveMapData);
