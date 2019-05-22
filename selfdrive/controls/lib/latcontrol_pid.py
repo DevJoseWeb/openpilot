@@ -1,19 +1,15 @@
 from selfdrive.controls.lib.pid import PIController
-from common.numpy_fast import interp
-from common.realtime import sec_since_boot
+from selfdrive.controls.lib.drive_helpers import get_steer_max
 from cereal import car
 from cereal import log
 
 
 class LatControlPID(object):
   def __init__(self, CP):
-    self.pid = PIController((CP.steerKpBP, CP.steerKpV),
-                            (CP.steerKiBP, CP.steerKiV),
-                            k_f=CP.steerKf, pos_limit=1.0)
-    self.last_cloudlog_t = 0.0
-    self.dampened_angle_steers = 0.
+    self.pid = PIController((CP.lateralTuning.pid.kpBP, CP.lateralTuning.pid.kpV),
+                            (CP.lateralTuning.pid.kiBP, CP.lateralTuning.pid.kiV),
+                            k_f=CP.lateralTuning.pid.kf, pos_limit=1.0)
     self.angle_steers_des = 0.
-    self.sat_time = 0.0
 
   def reset(self):
     self.pid.reset()
@@ -52,21 +48,5 @@ class LatControlPID(object):
       pid_log.output = output_steer
       pid_log.saturated = bool(self.pid.saturated)
 
-    # Reset sat_flat always, set it only if needed
-    self.sat_flag = False
-
-    # If PID is saturated, set time which it was saturated
-    if self.pid.saturated and self.sat_time < 0.5:
-      self.sat_time = sec_since_boot()
-
-    # To save cycles, nest in sat_time check
-    if self.sat_time > 0.5:
-      # If its been saturated for 1.5 seconds then set flag
-      if (sec_since_boot() - self.sat_time) > 0.7:
-        self.sat_flag = True
-
-      # If it is no longer saturated, clear the sat flag and timer
-      if not self.pid.saturated:
-        self.sat_time = 0.0
-
-    return output_steer, float(self.angle_steers_des)
+    self.sat_flag = self.pid.saturated
+    return output_steer, float(self.angle_steers_des), pid_log
