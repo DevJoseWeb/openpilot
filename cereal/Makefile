@@ -7,7 +7,7 @@ JS := gen/js/car.capnp.js gen/js/log.capnp.js gen/js/ui.capnp.js
 
 UNAME_M ?= $(shell uname -m)
 
-GENS += gen/c/car.capnp.c gen/c/log.capnp.c gen/c/include/c++.capnp.h gen/c/include/java.capnp.h
+GENS += gen/c/car.capnp.c gen/c/log.capnp.c gen/c/ui.capnp.c gen/c/include/c++.capnp.h gen/c/include/java.capnp.h 
 
 ifeq ($(UNAME_M),x86_64)
 
