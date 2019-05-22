@@ -262,8 +262,8 @@ class CarState(object):
     self.low_speed_lockout = self.v_wheel < 1.0
 
     # Kalman filter, even though Hyundai raw wheel speed is heaviliy filtered by default
-    if abs(v_wheel - self.v_ego) > 2.0:  # Prevent large accelerations when car starts at non zero speed
-      self.v_ego_kf.x = [[v_wheel], [0.0]]
+    if abs(self.v_wheel - self.v_ego) > 2.0:  # Prevent large accelerations when car starts at non zero speed
+      self.v_ego_kf.x = [[self.v_wheel], [0.0]]
 
     self.v_ego_raw = self.v_wheel
     v_ego_x = self.v_ego_kf.update(self.v_wheel)
